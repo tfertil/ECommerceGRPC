@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ProductService.gRPC": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:63188;http://localhost:63192"
+    }
+  }
+}
