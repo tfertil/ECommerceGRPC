@@ -23,7 +23,7 @@ public static class Mapeos
     };
 
     // Solicitud: ActualizarStockDto (REST) → UpdateStockRequest (gRPC). El id viene de la ruta.
-    // MANUAL
+    // codigo MANUAL
     public static UpdateStockRequest AUpdateStock(int id, ActualizarStockDto dto) => new()
     {
         // TODO 3b · Arme el UpdateStockRequest: Id sale de la ruta y Stock, de dto.Cantidad.

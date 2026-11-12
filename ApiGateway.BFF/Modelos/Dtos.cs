@@ -26,3 +26,8 @@ public record LineaPedidoDto(int ProductoId, int Cantidad);
 public record PedidoDto(List<LineaPedidoDto> Lineas);
 
 public record ValidacionPedidoDto(bool Valido, List<string> Problemas, decimal Total);
+
+// Codigo escrito manualmente
+public record CrearProductoDto(decimal Precio);
+
+public record RegistroDto(string Email, string Clave, string Nombre, string Apellido);
