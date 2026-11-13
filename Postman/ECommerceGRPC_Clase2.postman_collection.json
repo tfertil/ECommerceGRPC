@@ -17,6 +17,14 @@
     {
       "key": "tokenCliente",
       "value": ""
+    },
+    {
+      "key": "tarea1NombreProducto",
+      "value": ""
+    },
+    {
+      "key": "tarea1Email",
+      "value": ""
     }
   ],
   "item": [
@@ -734,6 +742,615 @@
                   "pm.test(\"200\", () => pm.response.to.have.status(200));",
                   "const j = pm.response.json();",
                   "pm.test(\"trae REST y gRPC\", () => { pm.expect(j.rest.length).to.be.above(0); pm.expect(j.grpc.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 · Tarea 1",
+      "description": "Ejecutar después de 0 · Inicio de sesión y en el orden guardado. Cubre las 11 respuestas de la tabla del enunciado. Genera un producto y un usuario por ejecución. Incluye esperas de 31 s para escrituras y 11 s para lecturas. En Runner configure un timeout de scripts mayor que 31000 ms (por ejemplo 60000 ms); con Newman use --timeout-script 60000. Ejecute una iteración, sin otras peticiones simultáneas. La prueba manual de caída de order-grpc del paso 7 se realiza por separado.",
+      "item": [
+        {
+          "name": "01 · Crear producto como Admin (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{tarea1NombreProducto}}\",\n  \"descripcion\": \"Creado por las pruebas de Tarea 1\",\n  \"precio\": 850.5,\n  \"stock\": 5,\n  \"categoria\": \"Laptops\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Identificadores distintos por ejecución para repetir la colección sin borrar datos.",
+                  "const sufijo = pm.variables.replaceIn('{{$guid}}');",
+                  "pm.collectionVariables.set('tarea1NombreProducto', 'Laptop Tarea 1 ' + sufijo);",
+                  "pm.collectionVariables.set('tarea1Email', 'tarea1.' + sufijo + '@example.com');",
+                  "// Libera la ventana de escrituras consumida por las carpetas anteriores.",
+                  "setTimeout(() => {}, 31000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 · 01 · Crear producto como Admin (201)', () => pm.response.to.have.status(201));",
+                  "",
+                  "pm.test('Producto creado con los datos enviados', () => {",
+                  "  const p = pm.response.json();",
+                  "  pm.expect(p.id).to.be.a('number').and.to.be.above(0);",
+                  "  pm.expect(p.nombre).to.eql(pm.collectionVariables.get('tarea1NombreProducto'));",
+                  "  pm.expect(p.descripcion).to.eql('Creado por las pruebas de Tarea 1');",
+                  "  pm.expect(p.precio).to.eql(850.50);",
+                  "  pm.expect(p.stock).to.eql(5);",
+                  "  pm.expect(p.categoria).to.eql('Laptops');",
+                  "  pm.expect(p.disponible).to.eql(true);",
+                  "  pm.expect(pm.response.headers.get('Location')).to.match(new RegExp('/api/v1/productos/' + p.id + '$'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 · Crear producto con datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{tarea1NombreProducto}}\",\n  \"descripcion\": \"Creado por las pruebas de Tarea 1\",\n  \"precio\": -1,\n  \"stock\": 5,\n  \"categoria\": \"Laptops\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 · 02 · Crear producto con datos inválidos (400)', () => pm.response.to.have.status(400));",
+                  "pm.test('Error gRPC InvalidArgument traducido a HTTP', () => {",
+                  "  const error = pm.response.json();",
+                  "  pm.expect(error.status).to.eql(pm.response.code);",
+                  "  pm.expect(error.codigoGrpc).to.eql('InvalidArgument');",
+                  "  pm.expect(error.detail).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 · Crear producto sin token (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{tarea1NombreProducto}}\",\n  \"descripcion\": \"Creado por las pruebas de Tarea 1\",\n  \"precio\": 850.5,\n  \"stock\": 5,\n  \"categoria\": \"Laptops\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 · 03 · Crear producto sin token (401)', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 · Crear producto como Cliente (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{tarea1NombreProducto}}\",\n  \"descripcion\": \"Creado por las pruebas de Tarea 1\",\n  \"precio\": 850.5,\n  \"stock\": 5,\n  \"categoria\": \"Laptops\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 · 04 · Crear producto como Cliente (403)', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 · Crear producto con nombre repetido (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "productos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{tarea1NombreProducto}}\",\n  \"descripcion\": \"Creado por las pruebas de Tarea 1\",\n  \"precio\": 850.5,\n  \"stock\": 5,\n  \"categoria\": \"Laptops\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Espera antes de otra escritura: la política se comparte con el PUT de stock.",
+                  "// También funciona si las carpetas previas consumieron los tres permisos.",
+                  "setTimeout(() => {}, 31000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 · 05 · Crear producto con nombre repetido (409)', () => pm.response.to.have.status(409));",
+                  "pm.test('Error gRPC AlreadyExists traducido a HTTP', () => {",
+                  "  const error = pm.response.json();",
+                  "  pm.expect(error.status).to.eql(pm.response.code);",
+                  "  pm.expect(error.codigoGrpc).to.eql('AlreadyExists');",
+                  "  pm.expect(error.detail).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 · Registrar usuario sin token (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "registro"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{tarea1Email}}\",\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Prueba\",\n  \"clave\": \"Prueba2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 · 06 · Registrar usuario sin token (201)', () => pm.response.to.have.status(201));",
+                  "",
+                  "pm.test('Usuario creado sin exponer contraseña ni hash', () => {",
+                  "  const u = pm.response.json();",
+                  "  pm.expect(u.id).to.be.a('number').and.to.be.above(0);",
+                  "  pm.expect(u.email).to.eql(pm.collectionVariables.get('tarea1Email'));",
+                  "  pm.expect(u.nombreCompleto).to.eql('Ana Prueba');",
+                  "  pm.expect(u.activo).to.eql(true);",
+                  "  pm.expect(Number.isNaN(Date.parse(u.creadoEl))).to.eql(false);",
+                  "  pm.expect(u).to.have.all.keys('id', 'email', 'nombreCompleto', 'activo', 'creadoEl');",
+                  "  pm.expect(pm.response.headers.get('Location')).to.match(new RegExp('/api/v1/usuarios/' + u.id + '$'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 · Registrar usuario con datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "registro"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{tarea1Email}}\",\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Prueba\",\n  \"clave\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 · 07 · Registrar usuario con datos inválidos (400)', () => pm.response.to.have.status(400));",
+                  "pm.test('Error gRPC InvalidArgument traducido a HTTP', () => {",
+                  "  const error = pm.response.json();",
+                  "  pm.expect(error.status).to.eql(pm.response.code);",
+                  "  pm.expect(error.codigoGrpc).to.eql('InvalidArgument');",
+                  "  pm.expect(error.detail).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 · Registrar usuario con correo repetido (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "registro"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{tarea1Email}}\",\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Prueba\",\n  \"clave\": \"Prueba2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 · 08 · Registrar usuario con correo repetido (409)', () => pm.response.to.have.status(409));",
+                  "pm.test('Error gRPC AlreadyExists traducido a HTTP', () => {",
+                  "  const error = pm.response.json();",
+                  "  pm.expect(error.status).to.eql(pm.response.code);",
+                  "  pm.expect(error.codigoGrpc).to.eql('AlreadyExists');",
+                  "  pm.expect(error.detail).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 · Listar usuarios como Admin (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Libera la ventana compartida de lecturas.",
+                  "setTimeout(() => {}, 11000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 · 09 · Listar usuarios como Admin (200)', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('ListUsers devuelve un arreglo JSON con el usuario registrado', () => {",
+                  "  const lista = pm.response.json();",
+                  "  pm.expect(lista).to.be.an('array');",
+                  "  const u = lista.find(u => u.email === pm.collectionVariables.get('tarea1Email'));",
+                  "  pm.expect(u, 'El usuario creado debe aparecer en el listado').to.exist;",
+                  "  pm.expect(u.nombreCompleto).to.eql('Ana Prueba');",
+                  "  lista.forEach(u => {",
+                  "    pm.expect(u).to.have.all.keys('id', 'email', 'nombreCompleto', 'activo', 'creadoEl');",
+                  "    pm.expect(u.activo).to.eql(true);",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 · Listar usuarios sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 · 10 · Listar usuarios sin token (401)', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 · Listar usuarios como Cliente (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 · 11 · Listar usuarios como Cliente (403)', () => pm.response.to.have.status(403));"
                 ]
               }
             }
