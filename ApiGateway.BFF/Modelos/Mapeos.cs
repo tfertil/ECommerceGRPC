@@ -8,6 +8,27 @@ namespace ApiGateway.BFF.Modelos;
 // Transformación de datos en el gateway: mensaje gRPC ⇄ JSON del cliente REST.
 public static class Mapeos
 {
+    // CrearProductoDto (REST) → CreateProductRequest (gRPC).
+    // Conserva el redondeo a dos decimales usado al crear productos.
+    public static CreateProductRequest ACreateProduct(CrearProductoDto dto) => new()
+    {
+        Name = dto.Nombre ?? "",
+        Description = dto.Descripcion ?? "",
+        Price = Math.Round((double)dto.Precio, 2),
+        Stock = dto.Stock,
+        Category = dto.Categoria ?? ""
+    };
+
+    // RegistroDto (REST) → CreateUserRequest (gRPC).
+    // La clave se envía al servicio de usuarios; nunca se incluye en UsuarioDto.
+    public static CreateUserRequest ACreateUser(RegistroDto dto) => new()
+    {
+        Email = dto.Email ?? "",
+        Name = dto.Nombre ?? "",
+        LastName = dto.Apellido ?? "",
+        Password = dto.Clave ?? ""
+    };
+
     // Respuesta: ProductReply (gRPC) → ProductoDto (REST).
     public static ProductoDto ADto(ProductReply p) => new()
     {

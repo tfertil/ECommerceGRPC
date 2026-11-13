@@ -27,7 +27,8 @@ public record PedidoDto(List<LineaPedidoDto> Lineas);
 
 public record ValidacionPedidoDto(bool Valido, List<string> Problemas, decimal Total);
 
-// Codigo escrito manualmente
-public record CrearProductoDto(decimal Precio);
+// Codigo escrito manualmente: unnicamente precio.
+// CODEX completa la lista de propiedades en CrearProductoDto y RegistroDto, que son los DTO de entrada de los controladores.
+public record CrearProductoDto(string Nombre, string? Descripcion, decimal Precio, int Stock, string Categoria);
 
 public record RegistroDto(string Email, string Clave, string Nombre, string Apellido);

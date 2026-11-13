@@ -30,6 +30,29 @@ public class ProductosController(ProductService.ProductServiceClient productos) 
         return Ok(lista);
     }
 
+    // Creado por CODEX: CreateProductAsync
+
+    /// <summary>Crea un producto. Solo el rol Admin.</summary>
+    /// <remarks>Llama a CreateProduct. Datos inválidos producen 400 y un nombre repetido, 409.</remarks>
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    [EnableRateLimiting("escrituras")]
+
+    // DUDA: Siempre es necesario especificar cada uno?
+
+    [ProducesResponseType<ProductoDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<ActionResult<ProductoDto>> Crear(CrearProductoDto dto, CancellationToken ct)
+    {
+        var reply = await productos.CreateProductAsync(Mapeos.ACreateProduct(dto), cancellationToken: ct);
+
+        return CreatedAtAction(nameof(Obtener), new { id = reply.Id }, Mapeos.ADto(reply));
+    }
+
     /// <summary>Un producto por id.</summary>
     [HttpGet("{id:int}")]
     [AllowAnonymous]
