@@ -7,7 +7,8 @@
 
 ### Cómo levantar el sistema
 #### Linux
-1.	Asegúrese de que Docker 
+1.	Asegúrese de que Docker se encuentra instalado y ejecutando
+
 2.	Confirme con 
 
 ```bash
@@ -31,6 +32,7 @@ docker ps | grep c2
 
 
 #### Windows
+
 1.	Asegúrese de abrir Docker Desktop para que el servidor Docker inicie
 
 2.	Confirme con 
